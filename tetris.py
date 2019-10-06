@@ -105,15 +105,8 @@ class Tetrisboard:
     
     def add_piece(self, piece_id, x, rotation):  # x is absolute x-axis position on board
         piece = tetris_shapes[piece_id]
-
-        if piece_id == 1 or piece_id == 2 or piece_id == 5:
-            rotation = rotation%2
-            if rotation:
+        for i in range(rotation):
                 piece = rotate_clockwise(piece)
-        elif piece_id != 6:
-            for i in range(rotation):
-                piece = rotate_clockwise(piece)
-
         piece_height = len(piece)
         piece_width = len(piece[0])
 
@@ -194,7 +187,11 @@ class AI:
         newboard.add_piece(piece2, x2, rotation2)
         cleared = newboard.lineclear()
         #print("Piecetime", time.time()-piece_time)
-
+        '''
+        newboard.drawboard()
+        root.update()
+        canvas.delete("all")
+        '''
         if newboard.is_ended():
             return -9999
         skyline, level = newboard.skyline()
@@ -207,12 +204,25 @@ class AI:
     def next_move(self, piece_index, second_piece):
         longer_side = min(len(tetris_shapes[piece_index]), len(tetris_shapes[piece_index][0])) # maximum amount of shifting x-axis
         longer_side2 = min(len(tetris_shapes[second_piece]), len(tetris_shapes[second_piece][0]))
+        max_rotations = 4
+        max_rotations2 = 4
+        
+        if piece_index == 6:
+            max_rotations = 1
+        elif piece_index in [1, 2, 5]:
+            max_rotations = 2
+
+        if second_piece == 6:
+            max_rotations2 = 1
+        elif second_piece in [1, 2, 5]:
+            max_rotations2 = 2
 
         best_move = [0, 0, 0]
         highest_score = -99999
-        for i in range(0, 4):
+            
+        for i in range(0, max_rotations):
             for j in range(0, 11-longer_side):
-                for l in range(0, 4):
+                for l in range(0, max_rotations2):
                     for m in range(0, 11-longer_side2):
                         mid_score = self.get_score(self.mainboard, piece_index, i, j, second_piece, l, m)
                         if mid_score > highest_score:
