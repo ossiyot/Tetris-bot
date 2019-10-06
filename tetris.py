@@ -11,7 +11,8 @@ height = 600
 canvas = tk.Canvas(root, width=width, height=height)
 canvas.pack()
 
-fps = 144  # times 2 because lineclear in different frame
+fps = 6  # times 2 because lineclear in different frame
+pps = 6.5 #line 278
 
 tetris_shapes = [
 	[[1, 1, 1],
@@ -119,6 +120,8 @@ class Tetrisboard:
             for j in range(0, piece_width):
                 self.board[end_y+i][x+j] += piece[i][j]
 
+        return end_y
+
     def holecount(self):
         holes = 0
 
@@ -141,9 +144,9 @@ class Tetrisboard:
         squared_errors = [(top_pieces[i]-mean)**2 for i in range(0, len(top_pieces))]
         return (math.sqrt(sum(squared_errors)/len(top_pieces)), mean)
 
-    def lineclear(self):
+    def lineclear(self, last_y):
         clear_y = []
-        for i in range(0, 20):
+        for i in range(last_y, 20):
             count = 0
             for j in range(0, 10):
                 if self.board[i][j] == 0:
@@ -181,11 +184,11 @@ class AI:
         #print("Boardtime", time.time()-board_time)
 
         piece_time = time.time()
-        newboard.add_piece(piece, x, rotation)
-        cleared = newboard.lineclear()
+        last_y = newboard.add_piece(piece, x, rotation)
+        cleared = newboard.lineclear(last_y)
 
-        newboard.add_piece(piece2, x2, rotation2)
-        cleared = newboard.lineclear()
+        last_y = newboard.add_piece(piece2, x2, rotation2)
+        cleared = newboard.lineclear(last_y)
         #print("Piecetime", time.time()-piece_time)
         '''
         newboard.drawboard()
@@ -253,7 +256,7 @@ start_time = time.time()
 printtime = True
 
 while loop:
-
+    pps_time = time.time()
     canvas.delete("all")
 
     tetris_AI.set_mainboard(tetris)
@@ -266,19 +269,20 @@ while loop:
     next_move = tetris_AI.next_move(que[0], que[1])
     del que[0]
 
-    tetris.add_piece(next_move[0], next_move[2], next_move[1])
+    last_y = tetris.add_piece(next_move[0], next_move[2], next_move[1])
 
     if tetris.is_ended():
         print(linescleared)
         break
     
+    time.sleep(1/pps-(pps_time-time.time()))   # comment out to remove pps limit
 
     tetris.drawboard()
     #tetris.printboard()
     canvas.create_text(280, 20, text=str(linescleared), font=("Arial", 16), fill="#FFFFFF")
     root.update()
 
-    temp_linescleared = tetris.lineclear()
+    temp_linescleared = tetris.lineclear(last_y)
     
     if temp_linescleared > 0:
         linescleared += temp_linescleared
