@@ -249,6 +249,9 @@ add_que = deepcopy(pieces)
 random.shuffle(add_que)
 que += add_que
 
+start_time = time.time()
+printtime = True
+
 while loop:
 
     canvas.delete("all")
@@ -272,7 +275,7 @@ while loop:
 
     tetris.drawboard()
     #tetris.printboard()
-    canvas.create_text(20, 20, text=str(linescleared), font=("Arial", 16), fill="#FFFFFF")
+    canvas.create_text(280, 20, text=str(linescleared), font=("Arial", 16), fill="#FFFFFF")
     root.update()
 
     temp_linescleared = tetris.lineclear()
@@ -280,8 +283,11 @@ while loop:
     if temp_linescleared > 0:
         linescleared += temp_linescleared
         tetris.drawboard()
-        canvas.create_text(20, 20, text=str(linescleared), font=("Arial", 16), fill="#FFFFFF")
-        time.sleep(1/fps)
+        canvas.create_text(280, 20, text=str(linescleared), font=("Arial", 16), fill="#FFFFFF")
+        #time.sleep(1/fps)
         root.update()
-
+    
+    if linescleared >= 40 and printtime:
+        print("40 lines in:",time.time()-start_time)
+        printtime = False
 root.mainloop()
