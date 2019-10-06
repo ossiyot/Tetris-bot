@@ -122,10 +122,10 @@ class Tetrisboard:
 
         return end_y
 
-    def holecount(self):
+    def holecount(self, last_y):
         holes = 0
 
-        for i in range(1, 20-1):
+        for i in range(last_y, 20-1):
             for j in range(0, 10):
                 if self.board[i][j] != 0 and self.board[i+1][j] == 0:
                     holes += 1
@@ -200,7 +200,7 @@ class AI:
         skyline, level = newboard.skyline()
         #print(level)
         score_time = time.time()
-        score = (1/(newboard.holecount()+1)**2)*(1/(skyline+1)**2)*((cleared+1)**0)*((level)/19)**20
+        score = (1/(newboard.holecount(last_y)+1)**2)*(1/(skyline+1)**2)*((cleared+1)**0)*((level)/19)**20
         #print("Scoretime", time.time()-score_time)
         return score
     
