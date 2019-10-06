@@ -120,12 +120,12 @@ class Tetrisboard:
             for j in range(0, piece_width):
                 self.board[end_y+i][x+j] += piece[i][j]
 
-        return end_y
+        return (end_y, piece_height)
 
-    def holecount(self, last_y):
+    def holecount(self):
         holes = 0
 
-        for i in range(last_y, 20-1):
+        for i in range(1, 20-1):
             for j in range(0, 10):
                 if self.board[i][j] != 0 and self.board[i+1][j] == 0:
                     holes += 1
@@ -144,9 +144,9 @@ class Tetrisboard:
         squared_errors = [(top_pieces[i]-mean)**2 for i in range(0, len(top_pieces))]
         return (math.sqrt(sum(squared_errors)/len(top_pieces)), mean)
 
-    def lineclear(self, last_y):
+    def lineclear(self, last_y, last_height):
         clear_y = []
-        for i in range(last_y, 20):
+        for i in range(last_y, last_y+last_height):
             count = 0
             for j in range(0, 10):
                 if self.board[i][j] == 0:
@@ -184,11 +184,11 @@ class AI:
         #print("Boardtime", time.time()-board_time)
 
         piece_time = time.time()
-        last_y = newboard.add_piece(piece, x, rotation)
-        cleared = newboard.lineclear(last_y)
+        last_y, last_height = newboard.add_piece(piece, x, rotation)
+        cleared = newboard.lineclear(last_y, last_height)
 
-        last_y = newboard.add_piece(piece2, x2, rotation2)
-        cleared = newboard.lineclear(last_y)
+        last_y, last_height = newboard.add_piece(piece2, x2, rotation2)
+        cleared = newboard.lineclear(last_y, last_height)
         #print("Piecetime", time.time()-piece_time)
         '''
         newboard.drawboard()
@@ -200,7 +200,7 @@ class AI:
         skyline, level = newboard.skyline()
         #print(level)
         score_time = time.time()
-        score = (1/(newboard.holecount(last_y)+1)**2)*(1/(skyline+1)**2)*((cleared+1)**0)*((level)/19)**20
+        score = (1/(newboard.holecount()+1)**2)*(1/(skyline+1)**2)*((cleared+1)**0)*((level)/19)**20
         #print("Scoretime", time.time()-score_time)
         return score
     
@@ -269,20 +269,20 @@ while loop:
     next_move = tetris_AI.next_move(que[0], que[1])
     del que[0]
 
-    last_y = tetris.add_piece(next_move[0], next_move[2], next_move[1])
+    last_y, last_height = tetris.add_piece(next_move[0], next_move[2], next_move[1])
 
     if tetris.is_ended():
         print(linescleared)
         break
     
-    time.sleep(1/pps-(pps_time-time.time()))   # comment out to remove pps limit
+    #time.sleep(1/pps-(pps_time-time.time()))   # comment out to remove pps limit
 
     tetris.drawboard()
     #tetris.printboard()
     canvas.create_text(280, 20, text=str(linescleared), font=("Arial", 16), fill="#FFFFFF")
     root.update()
 
-    temp_linescleared = tetris.lineclear(last_y)
+    temp_linescleared = tetris.lineclear(last_y, last_height)
     
     if temp_linescleared > 0:
         linescleared += temp_linescleared
