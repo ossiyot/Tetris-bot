@@ -187,8 +187,8 @@ class AI:
         last_y, last_height = newboard.add_piece(piece, x, rotation)
         cleared = newboard.lineclear(last_y, last_height)
 
-        last_y, last_height = newboard.add_piece(piece2, x2, rotation2)
-        cleared = newboard.lineclear(last_y, last_height)
+        last_y2, last_height = newboard.add_piece(piece2, x2, rotation2)
+        cleared = newboard.lineclear(last_y2, last_height)
         #print("Piecetime", time.time()-piece_time)
         '''
         newboard.drawboard()
@@ -200,7 +200,7 @@ class AI:
         skyline, level = newboard.skyline()
         #print(level)
         score_time = time.time()
-        score = (1/(newboard.holecount(last_y)+1)**2)*(1/(skyline+1)**2)*((cleared+1)**0)*((level)/19)**20
+        score = (1/(newboard.holecount(min(last_y, last_y2))+1)**2)*(1/(skyline+1)**2)*((cleared+1)**0)*((level)/19)**20
         #print("Scoretime", time.time()-score_time)
         return score
     
