@@ -4,6 +4,12 @@ from copy import deepcopy
 from copy import copy
 import ujson
 
+import numpy as np
+import tensorflow as tf
+import tensorflow.keras.layers as kl
+import gym
+from gym import spaces, logger
+from gym.utils import seeding
 
 root = tk.Tk()
 width = 300
@@ -13,6 +19,8 @@ canvas.pack()
 
 fps = 6  # times 2 because lineclear in different frame
 pps = 6.5 #line 278
+
+pieces = [0,1,2,3,4,5,6]
 
 tetris_shapes = [
 	[[1, 1, 1],
@@ -87,7 +95,6 @@ class Tetrisboard:
             print(self.board[i], i)
     
     def setboard(self, board):
-        #self.board = deepcopy(board)
         self.board = ujson.loads(ujson.dumps(board))
     
     def getboard(self):
@@ -99,7 +106,6 @@ class Tetrisboard:
     def drawboard(self):
         for i in range(0, 20):
             for j in range(0, 10):
-                #if self.board[i][j] != 0:
                 color = '#%02x%02x%02x' % colors[self.board[i][j]]
                 canvas.create_rectangle(j*width/10, i*height/20, j*width/10+width/10, i*height/20+height/20, outline="#000000", fill=color)
                 
@@ -155,9 +161,6 @@ class Tetrisboard:
             if count == 10:
                 clear_y.append(i)
         for i in range(len(clear_y)-1, -1, -1):
-            '''for j in range(clear_y[i]-1, -1, -1):
-                self.board[j+1] = deepcopy(self.board[j])'''
-            #self.board[1:clear_y[i]+1] = deepcopy(self.board[0:clear_y[i]])
             self.board[1:clear_y[i]+1] = ujson.loads(ujson.dumps(self.board[0:clear_y[i]]))
             for l in range(0, len(clear_y)):
                 clear_y[l] += 1
@@ -178,30 +181,19 @@ class AI:
         self.mainboard = tetrisboard
 
     def get_score(self, baseboard, piece, rotation, x, piece2, rotation2, x2):
-        board_time = time.time()
         newboard = Tetrisboard()
         newboard.setboard(baseboard.getboard())
-        #print("Boardtime", time.time()-board_time)
 
-        piece_time = time.time()
         last_y, last_height = newboard.add_piece(piece, x, rotation)
         cleared = newboard.lineclear(last_y, last_height)
 
         last_y2, last_height = newboard.add_piece(piece2, x2, rotation2)
         cleared = newboard.lineclear(last_y2, last_height)
-        #print("Piecetime", time.time()-piece_time)
-        '''
-        newboard.drawboard()
-        root.update()
-        canvas.delete("all")
-        '''
+
         if newboard.is_ended():
             return -9999
         skyline, level = newboard.skyline()
-        #print(level)
-        score_time = time.time()
         score = (1/(newboard.holecount(min(last_y, last_y2))+1)**2)*(1/(skyline+1)**2)*((cleared+1)**0)*((level)/19)**20
-        #print("Scoretime", time.time()-score_time)
         return score
     
     def next_move(self, piece_index, second_piece):
@@ -234,7 +226,46 @@ class AI:
                             best_move[2] = j
                             highest_score = mid_score
         return best_move
-  
+
+class Environment:
+    def __init__(self):
+        self.tetrisboard = Tetrisboard()
+        self.initQue()
+        self.action_space = spaces.Dict(position=spaces.Box(low=0, high=9, dtype=np.int32),
+                                        rotation=spaces.Box(low=0, high=3, dtype=np.int32))
+        self.observation_space = spaces.Dict(board=spaces.Box(low=0, high=7, shape=(20, 10), dtype=np.int32),
+                                            piece=spaces.Box(low=0, high=6, dtype=np.int32))
+        self.state = None
+        self.viewer = None
+    
+    def reset(self):
+        self.tetrisboard.resetboard()
+        self.initQue()
+        self.state = dict(board=self.tetrisboard.getboard(), piece=self.nextOnQue)
+    
+    def step(self, action):
+        state = self.state
+        
+
+    
+    def initQue(self):
+        self.que = []
+        add_que = ujson.loads(ujson.dumps(pieces))
+        random.shuffle(add_que)
+        self.que += add_que
+        random.shuffle(add_que)
+        self.que += add_que
+    
+    def nextOnQue(self):
+        if len(que) <= 7:
+            add_que = ujson.loads(ujson.dumps(pieces))
+            random.shuffle(add_que)
+            self.que += add_que
+        next = que[0]
+        del que[0]
+        return next
+
+    
 
 tetris = Tetrisboard()
 tetris_AI = AI(tetris)
@@ -242,15 +273,14 @@ tetris_AI = AI(tetris)
 linescleared = 0
 
 loop = True
-
-pieces = [0,1,2,3,4,5,6]
+'''
 que = []
 add_que = deepcopy(pieces)
 random.shuffle(add_que)
 que += add_que
 add_que = deepcopy(pieces)
 random.shuffle(add_que)
-que += add_que
+que += add_que'''
 
 start_time = time.time()
 printtime = True
@@ -262,7 +292,6 @@ while loop:
     tetris_AI.set_mainboard(tetris)
     
     if len(que) == 7:
-        #add_que = deepcopy(pieces)
         add_que = ujson.loads(ujson.dumps(pieces))
         random.shuffle(add_que)
         que += add_que
@@ -278,7 +307,6 @@ while loop:
     #time.sleep(1/pps-(pps_time-time.time()))   # comment out to remove pps limit
 
     tetris.drawboard()
-    #tetris.printboard()
     canvas.create_text(280, 20, text=str(linescleared), font=("Arial", 16), fill="#FFFFFF")
     root.update()
 
